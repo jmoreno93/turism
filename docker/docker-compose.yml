@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: turism-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-turism}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      TZ: ${TZ:-America/Lima}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - turism_postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-turism}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - turism-network
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: turism-app:local
+    container_name: turism-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-turism}
+      DB_USERNAME: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      DDL_AUTO: ${DDL_AUTO:-update}
+      SHOW_SQL: ${SHOW_SQL:-false}
+      TZ: ${TZ:-America/Lima}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    networks:
+      - turism-network
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: turism-pgadmin
+    restart: unless-stopped
+    profiles:
+      - tools
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@turism.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      TZ: ${TZ:-America/Lima}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - turism_pgadmin_data:/var/lib/pgadmin
+    networks:
+      - turism-network
+
+volumes:
+  turism_postgres_data:
+  turism_pgadmin_data:
+
+networks:
+  turism-network:
+    driver: bridge

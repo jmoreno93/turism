@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Turism | Portal de viajes</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="public-page">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <a class="brand" href="/">
+          <span class="brand-mark">T</span>
+          <span class="brand-copy"><strong>Turism</strong><span>Portal de viajes</span></span>
+        </a>
+        <nav class="top-nav" id="nav">
+          <button data-section="explorar" class="active">Explorar</button>
+          <button data-section="registro" class="session-guest">Crear cuenta</button>
+          <button data-section="viajero" class="session-auth hidden">Mis reservas</button>
+          <button data-section="notificaciones" class="session-auth hidden">Notificaciones</button>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <div class="subnav">
+          <button data-section="acceso" class="session-guest">Ingresar</button>
+          <button type="button" class="session-auth hidden" id="btnTopLogout">Salir</button>
+          <a href="/intranet/">Panel admin</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="hero-banner mb">
+      <div>
+        <span class="section-kicker">Experiencias turísticas</span>
+        <h1>Encuentra actividades, elige una fecha y reserva tu próxima experiencia.</h1>
+        <p>Busca opciones por destino, categoría o precio. Este portal está diseñado para clientes viajeros.</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-go-section="explorar">Buscar experiencias</button>
+          <button class="btn hero-ghost session-guest" data-go-section="registro">Crear cuenta</button>
+          <button class="btn hero-ghost session-guest" data-go-section="acceso">Ingresar</button>
+          <button class="btn hero-ghost session-auth hidden" data-go-section="viajero">Ver mis reservas</button>
+        </div>
+        <div class="hero-actions">
+          <span class="badge invert">Reservas online</span>
+          <span class="badge invert">Fechas disponibles</span>
+          <span class="badge invert">Confirmación del operador</span>
+        </div>
+      </div>
+      <div class="hero-panel">
+        <div class="session-summary" id="sessionInfo"></div>
+      </div>
+    </section>
+
+    <section id="explorar" class="section active">
+      <div class="card mb outline-brand">
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">Búsqueda</span>
+            <h3>Buscar experiencias</h3>
+            <p>Filtra las experiencias publicadas por texto, categoría y precio máximo.</p>
+          </div>
+          <button class="btn primary" id="btnLoadExperiencias">Actualizar catálogo</button>
+        </div>
+        <form id="formBuscar" class="search-panel">
+          <label class="field">Destino, nombre o descripción
+            <input id="searchText" type="search" placeholder="Ej.: Lima, aventura, gastronomía" />
+          </label>
+          <label class="field">Categoría
+            <select id="searchCategoria"><option value="">Todas</option></select>
+          </label>
+          <label class="field">Precio máximo
+            <input id="searchPrecio" type="number" min="0" step="1" placeholder="S/" />
+          </label>
+          <button class="btn dark" type="submit">Buscar</button>
+        </form>
+      </div>
+
+      <div class="grid two mb">
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Catálogo</span>
+              <h3>Experiencias disponibles</h3>
+              <p>Selecciona “Reservar” en cualquier tarjeta para autocompletar la solicitud.</p>
+            </div>
+            <span class="badge" id="experienciasCount">0 resultados</span>
+          </div>
+        </div>
+        <form class="card" id="formReserva">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Nueva reserva</span>
+              <h3>Solicitar reserva</h3>
+            </div>
+            <span class="badge">Viajeros</span>
+          </div>
+          <div class="form-grid">
+            <label class="field full">Experiencia seleccionada
+              <select name="idExperiencia" id="reservaExperienciaSelect" required>
+                <option value="">Selecciona una experiencia</option>
+              </select>
+            </label>
+            <label class="field">Fecha experiencia<input name="fechaExperiencia" id="reservaFechaInput" type="date" required /></label>
+            <label class="field">Cantidad de personas<input name="cantidadPersonas" type="number" min="1" value="1" required /></label>
+            <label class="field full">Observaciones<textarea name="observaciones" placeholder="Detalle opcional para el operador"></textarea></label>
+          </div>
+          <div class="actions mt">
+            <button class="btn primary" type="submit" id="btnEnviarReserva" disabled>Enviar solicitud</button>
+            <span class="small" id="reservaLoginHint">Primero inicia sesión para enviar una reserva.</span>
+          </div>
+        </form>
+      </div>
+      <div id="experienciasList" class="cards-list"></div>
+    </section>
+
+    <section id="acceso" class="section">
+      <div class="grid two">
+        <form class="card" id="formLogin">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Acceso de clientes</span>
+              <h3>Ingresar</h3>
+              <p>Este acceso es solo para viajeros.</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label class="field full">Email<input name="email" type="email" required placeholder="viajero@correo.com" /></label>
+            <label class="field full">Contraseña<input name="password" type="password" required placeholder="••••••••" /></label>
+          </div>
+          <div class="actions mt">
+            <button class="btn primary" type="submit">Ingresar</button>
+            <button class="btn ghost" type="button" id="btnLogout">Cerrar sesión</button>
+          </div>
+        </form>
+        <div class="card soft">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Activación</span>
+              <h3>Verificación de cuenta</h3>
+              <p>Para este prototipo, la activación se simula con un endpoint.</p>
+            </div>
+          </div>
+          <button class="btn primary" id="btnVerifyEmail">Activar mi cuenta</button>
+          <pre class="output mt" id="authOutput"></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="registro" class="section">
+      <form class="card" id="formRegistro">
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">Alta de cliente</span>
+            <h3>Crear cuenta de viajero</h3>
+            <p>Los operadores turísticos se crean desde el panel administrativo.</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <label class="field">Nombres<input name="nombres" required maxlength="100" /></label>
+          <label class="field">Apellidos<input name="apellidos" required maxlength="100" /></label>
+          <label class="field">Email<input name="email" type="email" required maxlength="150" /></label>
+          <label class="field">Teléfono<input name="telefono" required maxlength="20" value="999999999" /></label>
+          <label class="field">Contraseña<input name="password" type="password" required minlength="8" placeholder="Mínimo 8 caracteres" /></label>
+          <div class="field full">
+            <span class="label">Intereses</span>
+            <div class="checkbox-grid" id="interesesBox"></div>
+          </div>
+        </div>
+        <div class="actions mt">
+          <button class="btn primary" type="submit">Crear cuenta</button>
+          <button class="btn soft" type="button" data-go-section="acceso">Ya tengo cuenta</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="viajero" class="section">
+      <div class="grid two mb">
+        <div class="card outline-brand">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Reservas</span>
+              <h3>Mis reservas</h3>
+              <p>Consulta tus solicitudes y revisa si fueron confirmadas o rechazadas.</p>
+            </div>
+            <button class="btn primary" id="btnMisReservas">Actualizar</button>
+          </div>
+        </div>
+        <div class="card soft">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Flujo</span>
+              <h3>Cómo se procesa</h3>
+              <p>Tu solicitud nace como <strong>PENDIENTE</strong>. Luego el operador la confirma o rechaza.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card table-wrap"><table id="tablaMisReservas"></table></div>
+    </section>
+
+    <section id="notificaciones" class="section">
+      <div class="card mb outline-brand">
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">Mensajes</span>
+            <h3>Notificaciones</h3>
+            <p>Mensajes generados por reservas y cambios de estado.</p>
+          </div>
+          <button class="btn primary" id="btnNotificaciones">Actualizar</button>
+        </div>
+      </div>
+      <div id="notificacionesList" class="cards-list"></div>
+    </section>
+  </main>
+
+  <footer class="footer-band">
+    <div class="footer-inner">
+      <p>Turism · Portal de viajes para clientes.</p>
+      <p>Administradores: <a href="/intranet/"><strong>panel administrativo</strong></a>.</p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="/assets/shared.js"></script>
+  <script src="/extranet/app.js"></script>
+</body>
+</html>

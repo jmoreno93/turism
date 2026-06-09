@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Turism | Panel administrativo</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body class="intranet-page">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <a class="brand" href="/">
+          <span class="brand-mark">T</span>
+          <span class="brand-copy"><strong>Turism Admin</strong><span>Panel administrativo</span></span>
+        </a>
+        <nav class="top-nav" id="nav">
+          <button data-section="dashboard" class="active">Dashboard</button>
+          <button data-section="anfitriones">Anfitriones</button>
+          <button data-section="experiencias">Experiencias</button>
+          <button data-section="reservas">Reservas</button>
+          <button data-section="notificaciones">Notificaciones</button>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <div class="subnav">
+          <a href="/extranet/">Portal de viajes</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="hero-banner mb">
+      <div>
+        <span class="section-kicker">Control center</span>
+        <h1>Administra operadores, experiencias y validaciones desde un panel separado.</h1>
+        <p>Los anfitriones se registran aquí. Los clientes viajeros usan el portal público solo para buscar y reservar.</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-go-section="dashboard">Dashboard</button>
+          <button class="btn ghost" data-go-section="anfitriones">Gestionar anfitriones</button>
+          <button class="btn ghost" data-go-section="experiencias">Gestionar experiencias</button>
+        </div>
+      </div>
+      <form id="formAdminLogin" class="hero-panel">
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">Acceso administrativo</span>
+            <h3>Iniciar sesión</h3>
+            <p>Solo usuarios con rol administrador.</p>
+          </div>
+        </div>
+        <div class="form-grid">
+          <label class="field full">Email<input name="email" type="email" required value="admin@turism.local" /></label>
+          <label class="field full">Contraseña<input name="password" type="password" required value="Admin12345" /></label>
+        </div>
+        <div class="actions mt">
+          <button class="btn primary" type="submit">Ingresar</button>
+          <button class="btn ghost" type="button" id="btnAdminLogout">Cerrar sesión</button>
+        </div>
+        <div id="adminSession" class="mt small"></div>
+      </form>
+    </section>
+
+    <section id="dashboard" class="section active">
+      <div class="grid four mb">
+        <div class="card highlight"><span class="badge invert">Pendientes</span><h2 id="countAnfitriones">0</h2><p>Anfitriones por validar.</p></div>
+        <div class="card"><span class="badge warn">Pendientes</span><h2 id="countExperiencias">0</h2><p>Experiencias por revisar.</p></div>
+        <div class="card soft"><span class="badge ok">Catálogo</span><h2 id="countPublicadas">0</h2><p>Experiencias visibles al cliente.</p></div>
+        <div class="card soft"><span class="badge">Demo</span><h2>20</h2><p>Experiencias iniciales cargadas.</p></div>
+      </div>
+      <div class="notice-strip mb">
+        <span class="small">Después de cambiar el código y mantener el volumen de Postgres, el seed agrega el catálogo inicial si aún no existe.</span>
+        <button class="btn primary" id="btnRefreshDashboard">Actualizar dashboard</button>
+      </div>
+    </section>
+
+    <section id="anfitriones" class="section">
+      <div class="grid two mb">
+        <form class="card outline-brand" id="formCrearAnfitrion">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Nuevo operador</span>
+              <h3>Registrar anfitrión</h3>
+              <p>El anfitrión se crea desde administración y queda listo para validación.</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label class="field">Nombres<input name="nombres" required maxlength="100" /></label>
+            <label class="field">Apellidos<input name="apellidos" required maxlength="100" /></label>
+            <label class="field">Email<input name="email" type="email" required maxlength="150" /></label>
+            <label class="field">Teléfono<input name="telefono" required maxlength="20" value="999999999" /></label>
+            <label class="field">Contraseña<input name="password" type="password" required minlength="8" value="Host12345" /></label>
+            <label class="field">Documento<input name="documentoIdentidad" required maxlength="30" /></label>
+            <label class="field full">Descripción<textarea name="descripcionAnfitrion" required placeholder="Perfil, credenciales o descripción del operador"></textarea></label>
+          </div>
+          <button class="btn primary mt" type="submit">Registrar anfitrión</button>
+        </form>
+
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Validación</span>
+              <h3>Revisión de anfitriones</h3>
+              <p>Filtra y aprueba operadores turísticos.</p>
+            </div>
+          </div>
+          <div class="actions">
+            <select id="filterAnfitriones">
+              <option value="PENDIENTE">Pendientes</option>
+              <option value="APROBADO">Aprobados</option>
+              <option value="RECHAZADO">Rechazados</option>
+              <option value="">Todos</option>
+            </select>
+            <button class="btn primary" id="btnLoadAnfitriones">Cargar anfitriones</button>
+          </div>
+        </div>
+      </div>
+      <div class="card table-wrap"><table id="tablaAnfitriones"></table></div>
+    </section>
+
+    <section id="experiencias" class="section">
+      <div class="grid two mb">
+        <form class="card outline-brand" id="formCrearExperienciaAdmin">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Nueva experiencia</span>
+              <h3>Cargar experiencia para un anfitrión</h3>
+              <p>Indica el ID del anfitrión aprobado. La experiencia queda pendiente hasta aprobarla.</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label class="field">ID anfitrión<input name="idAnfitrion" type="number" min="1" required placeholder="Ej.: 1" /></label>
+            <label class="field">Categoría<select name="idCategoria" id="categoriaAdminSelect" required></select></label>
+            <label class="field">Título<input name="titulo" required maxlength="150" /></label>
+            <label class="field">Ubicación<input name="ubicacion" required maxlength="150" /></label>
+            <label class="field">Precio<input name="precio" type="number" min="0.01" step="0.01" required /></label>
+            <label class="field">Capacidad máxima<input name="capacidadMaxima" type="number" min="1" required /></label>
+            <label class="field">Duración horas<input name="duracionHoras" type="number" min="1" required /></label>
+            <label class="field full">Descripción<textarea name="descripcion" required></textarea></label>
+            <label class="field full">Fotos URLs, una por línea<textarea name="fotosUrls" required placeholder="https://...jpg"></textarea></label>
+            <label class="field full">Disponibilidades, una por línea: fecha,cupos<textarea name="disponibilidades" required placeholder="2026-07-20,10&#10;2026-07-21,8"></textarea></label>
+          </div>
+          <button class="btn primary mt" type="submit">Guardar experiencia</button>
+        </form>
+
+        <div class="card">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Validación</span>
+              <h3>Revisión de experiencias</h3>
+              <p>Aprueba o rechaza publicaciones antes de mostrarlas al cliente.</p>
+            </div>
+          </div>
+          <div class="actions">
+            <select id="filterExperiencias">
+              <option value="PENDIENTE">Pendientes</option>
+              <option value="PUBLICADA">Publicadas</option>
+              <option value="RECHAZADA">Rechazadas</option>
+              <option value="">Todas</option>
+            </select>
+            <button class="btn primary" id="btnLoadExperienciasAdmin">Cargar experiencias</button>
+          </div>
+        </div>
+      </div>
+      <div class="card table-wrap"><table id="tablaExperienciasAdmin"></table></div>
+    </section>
+
+    <section id="reservas" class="section">
+      <div class="card mb outline-brand">
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">Operación</span>
+            <h3>Reservas por anfitrión</h3>
+            <p>Consulta las reservas recibidas por un anfitrión y cambia el estado si corresponde.</p>
+          </div>
+        </div>
+        <form class="actions" id="formBuscarReservasAnfitrion">
+          <input name="idAnfitrion" type="number" min="1" placeholder="ID anfitrión" required />
+          <button class="btn primary" type="submit">Buscar reservas</button>
+        </form>
+      </div>
+      <div class="card table-wrap"><table id="tablaReservasAnfitrion"></table></div>
+    </section>
+
+    <section id="notificaciones" class="section">
+      <div class="card mb outline-brand">
+        <div class="panel-header">
+          <div>
+            <span class="section-kicker">Mensajes internos</span>
+            <h3>Notificaciones del administrador</h3>
+            <p>Eventos generados por validaciones y acciones del sistema.</p>
+          </div>
+          <button class="btn primary" id="btnAdminNotificaciones">Actualizar</button>
+        </div>
+      </div>
+      <div id="adminNotificaciones" class="cards-list"></div>
+    </section>
+  </main>
+
+  <footer class="footer-band">
+    <div class="footer-inner">
+      <p>Turism Admin · Gestión interna.</p>
+      <p>Clientes: <a href="/extranet/"><strong>portal de viajes</strong></a>.</p>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast"></div>
+  <script src="/assets/shared.js"></script>
+  <script src="/intranet/app.js"></script>
+</body>
+</html>
