@@ -18,12 +18,18 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-RUN addgroup -S turism && adduser -S turism -G turism
+RUN addgroup -S turism && adduser -S turism -G turism \
+    && mkdir -p /app/logs /tmp/turism-logs \
+    && chown -R turism:turism /app /tmp/turism-logs
 
 COPY --from=build /workspace/target/*.jar /app/app.jar
 
+RUN chown turism:turism /app/app.jar
+
 ENV JAVA_OPTS=""
 ENV SERVER_PORT=8080
+ENV LOG_PATH=/tmp/turism-logs
+ENV LOG_LEVEL=INFO
 
 EXPOSE 8080
 

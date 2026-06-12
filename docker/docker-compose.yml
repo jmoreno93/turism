@@ -40,6 +40,8 @@ services:
       SHOW_SQL: ${SHOW_SQL:-false}
       TZ: ${TZ:-America/Lima}
       JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx512m}
+      LOG_PATH: ${LOG_PATH:-/tmp/turism-logs}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "${APP_PORT:-8080}:8080"
     networks:

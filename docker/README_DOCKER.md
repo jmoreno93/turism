@@ -129,3 +129,20 @@ El arranque crea 20 experiencias publicadas si la base aún no tiene ese catálo
 docker compose down -v
 docker compose up --build
 ```
+
+
+## Logs
+
+La aplicación usa Logback. En Docker el path de logs queda en:
+
+```text
+/tmp/turism-logs/turism.log
+```
+
+También puedes ver los logs normalmente con:
+
+```bash
+docker compose logs -f app
+```
+
+Se cambió el path por defecto dentro del contenedor para evitar errores de permisos al escribir en `/app/logs`.
