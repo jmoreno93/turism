@@ -278,6 +278,14 @@ async function cargarNotificacionesAdmin() {
   `).join('') : '<div class="card"><p>No hay notificaciones.</p></div>';
 }
 
+function actualizarLinkExportExperiencias() {
+  const link = q('#btnExportExperiencias');
+  const select = q('#filterExperiencias');
+  if (!link || !select) return;
+  const estado = select.value;
+  link.href = `/api/v1/admin/exportaciones/experiencias.xlsx${estado ? `?estado=${encodeURIComponent(estado)}` : ''}`;
+}
+
 function wrap(fn) {
   return async (event) => {
     try { await fn(event); } catch (error) { toast(error.message || String(error), 'error'); }
@@ -294,6 +302,8 @@ function bind() {
   q('#btnLoadAnfitriones').addEventListener('click', wrap(cargarAnfitriones));
   q('#formCrearExperienciaAdmin').addEventListener('submit', wrap(crearExperienciaAdmin));
   q('#btnLoadExperienciasAdmin').addEventListener('click', wrap(cargarExperienciasAdmin));
+  q('#filterExperiencias').addEventListener('change', actualizarLinkExportExperiencias);
+  actualizarLinkExportExperiencias();
   q('#formBuscarReservasAnfitrion').addEventListener('submit', wrap(buscarReservasAnfitrion));
   q('#btnAdminNotificaciones').addEventListener('click', wrap(cargarNotificacionesAdmin));
 }

@@ -1,5 +1,7 @@
 package com.moises.turism.service;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.moises.turism.common.exception.ApiException;
 import com.moises.turism.domain.*;
 import com.moises.turism.dto.experiencia.CrearExperienciaRequest;
@@ -11,6 +13,8 @@ import com.moises.turism.enums.EstadoPublicacionExperiencia;
 import com.moises.turism.enums.EstadoValidacionAnfitrion;
 import com.moises.turism.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +22,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ExperienciaService {
+
+    private static final String CACHE_PUBLICADAS_KEY = "experiencias-publicadas";
+
+    private final Cache<String, List<ExperienciaResponse>> experienciasPublicadasCache = CacheBuilder.newBuilder()
+            .maximumSize(10)
+            .expireAfterWrite(3, TimeUnit.MINUTES)
+            .build();
 
     private final AnfitrionRepository anfitrionRepository;
     private final CategoriaExperienciaRepository categoriaExperienciaRepository;
@@ -41,6 +55,7 @@ public class ExperienciaService {
         experienciaRepository.save(experiencia);
         registrarFotos(experiencia, request.fotosUrls());
         registrarDisponibilidades(experiencia, request.disponibilidades());
+        invalidarCachePublicadas("crear");
 
         notificacionService.notificarAdministradores(
                 "Experiencia pendiente de revisión",
@@ -56,6 +71,7 @@ public class ExperienciaService {
         validarEstadoPendiente(experiencia);
         experiencia.setEstadoPublicacion(EstadoPublicacionExperiencia.PUBLICADA);
         experienciaRepository.save(experiencia);
+        invalidarCachePublicadas("aprobar");
 
         notificacionService.notificarUsuario(
                 experiencia.getAnfitrion().getUsuario(),
@@ -72,6 +88,7 @@ public class ExperienciaService {
         validarEstadoPendiente(experiencia);
         experiencia.setEstadoPublicacion(EstadoPublicacionExperiencia.RECHAZADA);
         experienciaRepository.save(experiencia);
+        invalidarCachePublicadas("rechazar");
 
         notificacionService.notificarUsuario(
                 experiencia.getAnfitrion().getUsuario(),
@@ -105,6 +122,7 @@ public class ExperienciaService {
         disponibilidadExperienciaRepository.deleteAllByExperienciaIdExperiencia(idExperiencia);
         registrarFotos(experiencia, request.fotosUrls());
         registrarDisponibilidades(experiencia, request.disponibilidades());
+        invalidarCachePublicadas("reenviar");
 
         notificacionService.notificarAdministradores(
                 "Experiencia reenviada",
@@ -116,6 +134,16 @@ public class ExperienciaService {
 
     @Transactional(readOnly = true)
     public List<ExperienciaResponse> listarPublicadas() {
+        try {
+            return experienciasPublicadasCache.get(CACHE_PUBLICADAS_KEY, this::cargarPublicadasDesdeDb);
+        } catch (ExecutionException ex) {
+            log.warn("No se pudo leer la caché de experiencias publicadas. Se consultará la base de datos.", ex);
+            return cargarPublicadasDesdeDb();
+        }
+    }
+
+    private List<ExperienciaResponse> cargarPublicadasDesdeDb() {
+        log.debug("Cargando experiencias publicadas desde base de datos.");
         return experienciaRepository.findAllByEstadoPublicacionOrderByFechaCreacionDesc(EstadoPublicacionExperiencia.PUBLICADA)
                 .stream()
                 .map(this::mapearRespuesta)
@@ -136,7 +164,7 @@ public class ExperienciaService {
     @Transactional(readOnly = true)
     public List<ExperienciaResponse> listarAdmin(String estado) {
         List<Experiencia> experiencias;
-        if (estado == null || estado.isBlank()) {
+        if (StringUtils.isBlank(estado)) {
             experiencias = experienciaRepository.findAllByOrderByFechaCreacionDesc();
         } else {
             EstadoPublicacionExperiencia estadoPublicacion = parsearEstadoPublicacion(estado);
@@ -150,6 +178,11 @@ public class ExperienciaService {
     @Transactional(readOnly = true)
     public ExperienciaResponse obtenerDetalle(Long idExperiencia) {
         return mapearRespuesta(obtenerExperiencia(idExperiencia));
+    }
+
+    private void invalidarCachePublicadas(String accion) {
+        experienciasPublicadasCache.invalidate(CACHE_PUBLICADAS_KEY);
+        log.debug("Caché de experiencias publicadas invalidada. accion={}", accion);
     }
 
     private EstadoPublicacionExperiencia parsearEstadoPublicacion(String estado) {

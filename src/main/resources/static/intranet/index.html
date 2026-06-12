@@ -71,7 +71,11 @@
       </div>
       <div class="notice-strip mb">
         <span class="small">Después de cambiar el código y mantener el volumen de Postgres, el seed agrega el catálogo inicial si aún no existe.</span>
-        <button class="btn primary" id="btnRefreshDashboard">Actualizar dashboard</button>
+        <div class="actions">
+          <button class="btn primary" id="btnRefreshDashboard">Actualizar dashboard</button>
+          <a class="btn dark" href="/api/v1/admin/exportaciones/experiencias.xlsx">Exportar experiencias Excel</a>
+          <a class="btn dark" href="/api/v1/admin/exportaciones/reservas.xlsx">Exportar reservas Excel</a>
+        </div>
       </div>
     </section>
 
@@ -160,6 +164,7 @@
               <option value="">Todas</option>
             </select>
             <button class="btn primary" id="btnLoadExperienciasAdmin">Cargar experiencias</button>
+            <a class="btn dark" id="btnExportExperiencias" href="/api/v1/admin/exportaciones/experiencias.xlsx?estado=PENDIENTE">Exportar Excel</a>
           </div>
         </div>
       </div>
@@ -178,6 +183,7 @@
         <form class="actions" id="formBuscarReservasAnfitrion">
           <input name="idAnfitrion" type="number" min="1" placeholder="ID anfitrión" required />
           <button class="btn primary" type="submit">Buscar reservas</button>
+          <a class="btn dark" href="/api/v1/admin/exportaciones/reservas.xlsx">Exportar todas Excel</a>
         </form>
       </div>
       <div class="card table-wrap"><table id="tablaReservasAnfitrion"></table></div>

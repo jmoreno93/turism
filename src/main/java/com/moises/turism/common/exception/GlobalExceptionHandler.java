@@ -1,6 +1,7 @@
 package com.moises.turism.common.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -13,10 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex, HttpServletRequest request) {
+        log.warn("Error controlado. status={}, path={}, message={}", ex.getStatus().value(), request.getRequestURI(), ex.getMessage());
         ErrorResponse body = new ErrorResponse(
                 LocalDateTime.now(),
                 ex.getStatus().value(),
@@ -30,6 +33,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        log.warn("Error de validación. path={}, fields={}", request.getRequestURI(), ex.getBindingResult().getFieldErrorCount());
         List<String> details = new ArrayList<>();
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             details.add(fieldError.getField() + ": " + fieldError.getDefaultMessage());
@@ -54,6 +58,11 @@ public class GlobalExceptionHandler {
 
         HttpStatus status = isNotFound ? HttpStatus.NOT_FOUND : HttpStatus.INTERNAL_SERVER_ERROR;
         String message = isNotFound ? "Recurso no encontrado." : "Ocurrió un error interno.";
+        if (isNotFound) {
+            log.warn("Recurso no encontrado. path={}, detail={}", request.getRequestURI(), ex.getMessage());
+        } else {
+            log.error("Error inesperado. path={}", request.getRequestURI(), ex);
+        }
 
         ErrorResponse body = new ErrorResponse(
                 LocalDateTime.now(),
